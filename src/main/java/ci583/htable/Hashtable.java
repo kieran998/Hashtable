@@ -25,7 +25,9 @@ public class Hashtable<V> {
 	private Set<String> keys = new HashSet<>();
 
 	public enum PROBE_TYPE {
-		LINEAR_PROBE, QUADRATIC_PROBE, DOUBLE_HASH
+		LINEAR_PROBE,
+		QUADRATIC_PROBE,
+		DOUBLE_HASH
 	}
 	//probe used when dealing with collisions
 
@@ -39,7 +41,6 @@ public class Hashtable<V> {
 		this.probeType = pt;
 		this.max = nextPrime(initialCapacity);
 		this.arr = new Object[max];
-		this.itemCount = 0;
 		}
 	
 	/**
@@ -80,7 +81,9 @@ public class Hashtable<V> {
 	private int findEmpty(int start, int stepNum, String key) 
 	    {int index = start;
 	     int maxProbes = max/2; // you can set this to any value you want
-	     while (index >= 0 && index < max && arr[index] != null && !((Pair)arr[index]).key.equals(key) && stepNum < maxProbes) {
+	     while (index >= 0 && index < max && arr[index] != null && !((Pair)arr[index]).key.equals(key) && stepNum < maxProbes) 
+	     
+	     {
 	        index = (index + probe(stepNum)) % max;
 	        stepNum++;
 	    } return index;
@@ -95,11 +98,15 @@ public class Hashtable<V> {
 	 * @param key	The key of the object we are looking for.
 	 * @return		An Optional containing the value we are asked to find, which is empty if the key was not present.
 	 */
-	public Optional<V> get(String key) {
+	public Optional<V> get(String key) 
+	{
 	    int index = find(hash(key), 0, key);
-	    if (arr[index] != null) {
+	    if (arr[index] != null) 
+	    {
 	        return Optional.of((V)((Pair)arr[index]).value);
 	    } else 
+	    	
+	
 	    {
 	        return Optional.empty();
 	    }
@@ -120,22 +127,23 @@ public class Hashtable<V> {
 	 * @return	The collection of keys.
 	 */
 	public Collection<String> getKeys() {
-		for (int i = 0; i < max; i++) {
-	        if (arr[i] != null) {
-	            keys.add(((Pair)arr[i]).key);
-	        } else {
-	            itemCount--;
-	        }
-	    }
-	    return keys;
+
+	    List<String> result = new ArrayList<>();
+	    for(Object o : arr) {
+	        if(o != null) {
+	            result.add(((Pair)o).key);
+            }
+        }
+        return result;
 	}
 
 	/**
 	 * Return the load factor, which is the ratio of itemCount to max. 
 	 * @return	The load factor
 	 */
-	public double getLoadFactor() {
-	    return (double) itemCount / max;
+	public double getLoadFactor() 
+	{
+	    return (double) itemCount/max;
 	}
 
 	/**
@@ -159,9 +167,11 @@ public class Hashtable<V> {
 	 * @param stepNum	The number of times this method has been called in the current search.
 	 * @return			The value of the Pair object with the right key.
 	 */
-	private int find(int start, int stepNum, String key) {
+	private int find(int start, int stepNum, String key) 
+	{
 	    int index = start;
-	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key)) {
+	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key))
+	    {
 	        index = (index + probe(stepNum)) % max;
 	        stepNum++;
 	    }
@@ -179,9 +189,11 @@ public class Hashtable<V> {
 	 * @param stepNum	The number of times this method has been called in the current search for a location.
 	 * @return			The location at which a Pair object with the key `key' can be stored.
 	 */
-	private int findEmptyOrSameKey(int startPos, String key, int stepNum) {
+	private int findEmpty(int startPos, String key, int stepNum) 
+	{
 	    int index = startPos;
-	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key)) {
+	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key))
+	    {
 	        index = (index + probe(stepNum)) % max;
 	        stepNum++;
 	    }
@@ -198,9 +210,11 @@ public class Hashtable<V> {
 	 * @param stepNum	The number of times this method has been called in the current search for a location.
 	 * @return			The next location
 	 */
-	private int getNextLocation(int startPos, String key, int stepNum) {
+	private int getNextLocation(int startPos, String key, int stepNum) 
+	{
 		int step = startPos;
-		switch (probeType) {
+		switch (probeType) 
+		{
 		case LINEAR_PROBE:
 			step++;
 			break;
@@ -222,7 +236,9 @@ public class Hashtable<V> {
 	 * @param key	The string to hash
 	 * @return		The hash value
 	 */
-	private int doubleHash(String key) {
+	private int doubleHash(String key)
+	
+	{
 		return (hash(key) % DOUBLE_HASH_MAX) + 1;
 	}
 
@@ -234,18 +250,17 @@ public class Hashtable<V> {
 	 * @return		The hash value
 	 */
 	private int hash(String key) {
-	    int hash = 0;
-	    for (int i = 0; i < key.length(); i++) {
-	        hash = 31 * hash + key.charAt(i);
-	    }
-	    if (hash < 0) {
-	        hash = Math.abs(hash);
-	    }
-	    return hash % max;
+        Long hash = 0L;
+        for (int i = 0; i < key.length(); i++) {
+            hash = key.charAt(i) + (hash << 6) + (hash << 16) - hash;
+        }
+        return Math.abs(hash.intValue() % max);
 	}
 	
-	private int probe(int stepNum) {
-	    switch (probeType) {
+	private int probe(int stepNum) 
+	{
+	    switch (probeType)
+	    {
 	        case LINEAR_PROBE:
 	            return stepNum;
 	        case QUADRATIC_PROBE:
@@ -257,7 +272,8 @@ public class Hashtable<V> {
 	    }
 	}
 	
-	private int doubleHash(int stepNum) {
+	private int doubleHash(int stepNum)
+	{
 	    int h2 = DOUBLE_HASH_MAX - (stepNum % DOUBLE_HASH_MAX);
 	    return h2;
 	}
@@ -267,11 +283,13 @@ public class Hashtable<V> {
 	 * @param n		The number to test
 	 * @return		True if n is prime, false otherwise.
 	 */
-	private boolean isPrime(int n) {
+	private boolean isPrime(int n)
+	{
 	    if (n < 2) {
 	        return false;
 	    }
-	    for (int i = 2; i <= Math.sqrt(n); i++) {
+	    for (int i = 2; i <= Math.sqrt(n); i++) 
+	    {
 	        if (n % i == 0) {
 	            return false;
 	        }
@@ -284,8 +302,10 @@ public class Hashtable<V> {
 	 * @param n		The number for which to find the next prime.
 	 * @return		The smallest prime number larger than or equal to n
 	 */
-	private int nextPrime(int n) {
-	    while (!isPrime(n)) {
+	private int nextPrime(int n) 
+	{
+	    while (!isPrime(n)) 
+	    {
 	        n++;
 	    }
 	    return n;
@@ -296,11 +316,14 @@ public class Hashtable<V> {
 	 * the underlying array should be the smallest prime number which is at least twice the size
 	 * of the old array.
 	 */
-	private void resize() {
+	private void resize()
+	{
 	    Object[] newArr = new Object[nextPrime(max * 2)];
 	    Set<String> newKeys = new HashSet<>();
-	    for (int i = 0; i < max; i++) {
-	        if (arr[i] != null) {
+	    for (int i = 0; i < max; i++) 
+	    {
+	        if (arr[i] != null) 
+	        {
 	            Pair<V> pair = (Pair<V>) arr[i];
 	            int newIndex = findEmpty(hash(pair.key), 0, pair.key);
 	            newArr[newIndex] = pair;
@@ -312,7 +335,8 @@ public class Hashtable<V> {
 	    keys = newKeys;
 	}
 	
-	private double loadFactor() {
+	private double loadFactor() 
+	{
 	    return (double) itemCount / max;
 	}
 
@@ -322,11 +346,13 @@ public class Hashtable<V> {
 	 * the value because we need to check the original key in the case of collisions.
 	 *
 	 */
-	private class Pair<V> {
+	private class Pair<V> 
+	{
 	    String key;
 	    V value;
 
-	    public Pair(String key, V value) {
+	    public Pair(String key, V value)
+	    {
 	        this.key = key;
 	        this.value = value;
 	    }
