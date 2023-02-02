@@ -2,8 +2,10 @@ package ci583.htable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A HashTable with no deletions allowed. Duplicates overwrite the existing value. Values are of
@@ -20,28 +22,33 @@ public class Hashtable<V> {
 	private int max; //the size of arr. This should be a prime number.
 	private int itemCount; //the number of items stored in arr.
 	private final double maxLoad = 0.6; //the maximum load factor.
+	private Set<String> keys = new HashSet<>();
 
 	public enum PROBE_TYPE {
 		LINEAR_PROBE, QUADRATIC_PROBE, DOUBLE_HASH
 	}
-	private final PROBE_TYPE probeType; //the type of probe to use when dealing with collisions
+	//probe used when dealing with collisions
 
+	private final PROBE_TYPE probeType; 
 	/**
 	 * Create a new Hashtable with a given initial capacity and using a given probe type.
 	 * @param initialCapacity	The desired size of the Hashtable.
 	 * @param pt				The probe type to be used.
 	 */
 	public Hashtable(int initialCapacity, PROBE_TYPE pt) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
-	}
+		this.probeType = pt;
+		this.max = nextPrime(initialCapacity);
+		this.arr = new Object[max];
+		this.itemCount = 0;
+		}
 	
 	/**
 	 * Create a new Hashtable with a given initial capacity and using the default probe type.
 	 * @param initialCapacity	The desired size of the Hashtable.
 	 */
 	public Hashtable(int initialCapacity) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
-	}
+		this(initialCapacity, PROBE_TYPE.LINEAR_PROBE);
+		}
 
 	/**
 	 * Store the value against the given key. If the key is null or an empty string, throw an
@@ -55,7 +62,28 @@ public class Hashtable<V> {
 	 * @param value 	The value to store against the key.
 	 */
 	public void put(String key, V value) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+		if (key == null || key.isEmpty()) {
+		throw new IllegalArgumentException("Key can't be null");
+		} int index = findEmpty(hash(key), 0, key);
+		if (index == -1) {
+		throw new IllegalArgumentException("Array full");
+		} if(keys.contains(key)) {
+		itemCount--;
+		} keys.add(key);
+		arr[index] = new Pair<V>(key, value);
+		itemCount++;
+		if (loadFactor() > maxLoad) {
+		resize();
+		}
+		}
+	
+	private int findEmpty(int start, int stepNum, String key) 
+	    {int index = start;
+	     int maxProbes = max/2; // you can set this to any value you want
+	     while (index >= 0 && index < max && arr[index] != null && !((Pair)arr[index]).key.equals(key) && stepNum < maxProbes) {
+	        index = (index + probe(stepNum)) % max;
+	        stepNum++;
+	    } return index;
 	}
 
 	/**
@@ -68,7 +96,13 @@ public class Hashtable<V> {
 	 * @return		An Optional containing the value we are asked to find, which is empty if the key was not present.
 	 */
 	public Optional<V> get(String key) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    int index = find(hash(key), 0, key);
+	    if (arr[index] != null) {
+	        return Optional.of((V)((Pair)arr[index]).value);
+	    } else 
+	    {
+	        return Optional.empty();
+	    }
 	}
 
 	/**
@@ -77,7 +111,8 @@ public class Hashtable<V> {
 	 * @return		True if the hashtable contains the key.
 	 */
 	public boolean hasKey(String key) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    int index = find(hash(key), 0, key);
+	    return arr[index] != null;
 	}
 
 	/**
@@ -85,15 +120,22 @@ public class Hashtable<V> {
 	 * @return	The collection of keys.
 	 */
 	public Collection<String> getKeys() {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+		for (int i = 0; i < max; i++) {
+	        if (arr[i] != null) {
+	            keys.add(((Pair)arr[i]).key);
+	        } else {
+	            itemCount--;
+	        }
+	    }
+	    return keys;
 	}
 
 	/**
-	 * Return the load factor, which is the ratio of itemCount to max.
+	 * Return the load factor, which is the ratio of itemCount to max. 
 	 * @return	The load factor
 	 */
 	public double getLoadFactor() {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    return (double) itemCount / max;
 	}
 
 	/**
@@ -101,7 +143,7 @@ public class Hashtable<V> {
 	 * @return	The maximum capacity.
 	 */
 	public int getCapacity() {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    return max;
 	}
 	
 	/**
@@ -117,8 +159,13 @@ public class Hashtable<V> {
 	 * @param stepNum	The number of times this method has been called in the current search.
 	 * @return			The value of the Pair object with the right key.
 	 */
-	private Optional<V> find(int startPos, String key, int stepNum) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	private int find(int start, int stepNum, String key) {
+	    int index = start;
+	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key)) {
+	        index = (index + probe(stepNum)) % max;
+	        stepNum++;
+	    }
+	    return index;
 	}
 
 	/**
@@ -133,7 +180,12 @@ public class Hashtable<V> {
 	 * @return			The location at which a Pair object with the key `key' can be stored.
 	 */
 	private int findEmptyOrSameKey(int startPos, String key, int stepNum) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    int index = startPos;
+	    while (arr[index] != null && !((Pair)arr[index]).key.equals(key)) {
+	        index = (index + probe(stepNum)) % max;
+	        stepNum++;
+	    }
+	    return index;
 	}
 
 	/**
@@ -182,7 +234,32 @@ public class Hashtable<V> {
 	 * @return		The hash value
 	 */
 	private int hash(String key) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    int hash = 0;
+	    for (int i = 0; i < key.length(); i++) {
+	        hash = 31 * hash + key.charAt(i);
+	    }
+	    if (hash < 0) {
+	        hash = Math.abs(hash);
+	    }
+	    return hash % max;
+	}
+	
+	private int probe(int stepNum) {
+	    switch (probeType) {
+	        case LINEAR_PROBE:
+	            return stepNum;
+	        case QUADRATIC_PROBE:
+	            return stepNum * stepNum;
+	        case DOUBLE_HASH:
+	            return stepNum * doubleHash(stepNum);
+	        default:
+	            return stepNum;
+	    }
+	}
+	
+	private int doubleHash(int stepNum) {
+	    int h2 = DOUBLE_HASH_MAX - (stepNum % DOUBLE_HASH_MAX);
+	    return h2;
 	}
 
 	/**
@@ -191,7 +268,15 @@ public class Hashtable<V> {
 	 * @return		True if n is prime, false otherwise.
 	 */
 	private boolean isPrime(int n) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    if (n < 2) {
+	        return false;
+	    }
+	    for (int i = 2; i <= Math.sqrt(n); i++) {
+	        if (n % i == 0) {
+	            return false;
+	        }
+	    }
+	    return true;
 	}
 
 	/**
@@ -200,7 +285,10 @@ public class Hashtable<V> {
 	 * @return		The smallest prime number larger than or equal to n
 	 */
 	private int nextPrime(int n) {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    while (!isPrime(n)) {
+	        n++;
+	    }
+	    return n;
 	}
 
 	/**
@@ -209,7 +297,23 @@ public class Hashtable<V> {
 	 * of the old array.
 	 */
 	private void resize() {
-		throw new java.lang.UnsupportedOperationException("Not implemented yet.");
+	    Object[] newArr = new Object[nextPrime(max * 2)];
+	    Set<String> newKeys = new HashSet<>();
+	    for (int i = 0; i < max; i++) {
+	        if (arr[i] != null) {
+	            Pair<V> pair = (Pair<V>) arr[i];
+	            int newIndex = findEmpty(hash(pair.key), 0, pair.key);
+	            newArr[newIndex] = pair;
+	            newKeys.add(pair.key);
+	        }
+	    }
+	    max = nextPrime(max * 2);
+	    arr = newArr;
+	    keys = newKeys;
+	}
+	
+	private double loadFactor() {
+	    return (double) itemCount / max;
 	}
 
 	
@@ -218,14 +322,13 @@ public class Hashtable<V> {
 	 * the value because we need to check the original key in the case of collisions.
 	 *
 	 */
-	private class Pair {
-		private final String key;
-		private final V value;
+	private class Pair<V> {
+	    String key;
+	    V value;
 
-		Pair(String key, V value) {
-			this.key = key;
-			this.value = value;
-		}
+	    public Pair(String key, V value) {
+	        this.key = key;
+	        this.value = value;
+	    }
 	}
-
 }
